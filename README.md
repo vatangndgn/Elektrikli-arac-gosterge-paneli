@@ -1,0 +1,1 @@
+C++ ile geliştirilmiş, Observer tasarım deseni kullanılarak oluşturulan elektrikli araç enerji tüketim simülasyonu. Anlık hız ve ivme verilerini işleyerek batarya deşarj oranını hesaplayan modüler bir sistemdir. Fiziksel formüller örnek amaçlı basitleştirilmiştir.
