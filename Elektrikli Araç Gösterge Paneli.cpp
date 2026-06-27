@@ -10,7 +10,6 @@ class SpeedSensor {
 private:
     int currentSpeed = 0;
     std::vector<IDisplay*> displays;
-
 public:
     void attach(IDisplay* display) {
         displays.push_back(display);
