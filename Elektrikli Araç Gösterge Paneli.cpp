@@ -1,108 +1,103 @@
-﻿#include <iostream>
+#include <iostream>
 #include <vector>
-using namespace std;
 
-class AnaEkran {
+//Baştaki I(Interface) 
+class IDisplay {
 public:
-    virtual void update(int hiz) = 0;
-    virtual ~AnaEkran() = default;
+    virtual void update(int speed) = 0;
+    virtual ~IDisplay() = default;
 };
-
-class HizSensoru {
-protected:
-    int hiz = 0;
-    vector<AnaEkran*> anaEkran;
-
-public:
-    void anaEkranaEkle(AnaEkran* aek) {
-        anaEkran.push_back(aek);
-    }
-
-    void hizAyarla(int h) {
-        hiz = h;
-
-        for (auto aek : anaEkran) {
-            aek->update(hiz);
-        }
-    }
-};
-
-class HizGostegesi : public AnaEkran {
+class SpeedSensor {
 private:
-    int hiz = 0;
+    int currentSpeed = 0;
+    std::vector<IDisplay*> displays;
 
 public:
-    void hiziGoster() {
-        cout << "Hiz: " << hiz << " km/h" << endl;
+    void attach(IDisplay* display) {
+        displays.push_back(display);
     }
 
-    void update(int h) override {
-        hiz = h;
-        hiziGoster();
+    void setSpeed(int speed) {
+        currentSpeed = speed;
+        for (auto display : displays) {
+            display->update(currentSpeed);
+        }
     }
 };
 
-class YakitTuketimi : public AnaEkran {
-protected:
-    int hiz = 0;
-    double yakitMiktari = 88.0;
-    double anlikTuketim = 0.0;
-    double anlikEksilen = 0.0;
-    int eskiHiz = 0;
-    double aracKutlesi = 1800.0;
+class SpeedDisplay : public IDisplay {
+private:
+    int speed = 0;
 
 public:
-    void anlikTuketimiGoster(int guncelHiz) {
-        double sabitYuk = guncelHiz * 0.15;
-        double ivmeYuku = 0.0;
-        int ivme = guncelHiz - eskiHiz;
+    void showSpeed() const {
+        std::cout << "Current Speed: " << speed << " km/h\n";
+    }
 
-        if (ivme > 0) {
-            double hizlanmaKuvveti = aracKutlesi * (ivme / 3.6);
-            ivmeYuku = (hizlanmaKuvveti * (guncelHiz / 3.6) / 1000.0) / 0.90;
+    void update(int s) override {
+        speed = s;
+        showSpeed();
+    }
+};
+
+class BatteryManager : public IDisplay {
+private:
+    int previousSpeed = 0;
+    double batteryLevel = 88.0;
+    const double vehicleMass = 1800.0;
+
+    double currentPowerKw = 0.0;
+    double consumedKwh = 0.0;
+
+    void calculatePowerDemand(int currentSpeed) {
+        double constantLoad = currentSpeed * 0.15;
+        double accelerationLoad = 0.0;
+        int speedDelta = currentSpeed - previousSpeed;
+
+        if (speedDelta > 0) {
+            double acceleration = speedDelta / 3.6; // m/s^2 (1 saniyelik zaman dilimi için)
+            double force = vehicleMass * acceleration;
+            accelerationLoad = (force * (currentSpeed / 3.6) / 1000.0) / 0.90;
         }
 
-        anlikTuketim = sabitYuk + ivmeYuku;
+        currentPowerKw = constantLoad + accelerationLoad;
+        std::cout << "Instant Power Demand: " << currentPowerKw << " kW\n";
 
-        cout << "Anlik Tuketim: "
-            << anlikTuketim
-            << " kW" << endl;
-
-        eskiHiz = guncelHiz;
+        previousSpeed = currentSpeed;
     }
 
-    void kalanYakit() {
-        anlikEksilen = anlikTuketim / 3600.0;
-        yakitMiktari -= anlikEksilen;
+    void updateBatteryLevel() {
+        consumedKwh = currentPowerKw / 3600.0; // 1 saniyede harcanan enerji
+        batteryLevel -= consumedKwh;
 
-        cout << "Kalan Yakit: "
-            << yakitMiktari
-            << " kWh" << endl;
+        if (batteryLevel < 0) {
+            batteryLevel = 0.0;
+        }
+
+        std::cout << "Remaining Battery: " << batteryLevel << " kWh\n";
     }
 
-    void update(int h) override {
-        hiz = h;
-        anlikTuketimiGoster(h);
-        kalanYakit();
+public:
+    void update(int speed) override {
+        calculatePowerDemand(speed);
+        updateBatteryLevel();
     }
 };
 
 int main() {
-    HizSensoru arabaSensoru;
+    SpeedSensor carSensor;
 
-    HizGostegesi gostergeEkrani;
-    YakitTuketimi yakitEkrani;
-  
+    SpeedDisplay dashboardSpeed;
+    BatteryManager dashboardBattery;
 
-    arabaSensoru.anaEkranaEkle(&gostergeEkrani);
-    arabaSensoru.anaEkranaEkle(&yakitEkrani);
-    
+    carSensor.attach(&dashboardSpeed);
+    carSensor.attach(&dashboardBattery);
 
-    cout << "1. DURUM: 0 km/h -> 10 km/h" << endl;
-    arabaSensoru.hizAyarla(10);
+    std::cout << "--- SCENARIO 1: 0 km/h -> 10 km/h ---\n";
+    carSensor.setSpeed(10);
 
-    cout << "\n2. DURUM: 10 km/h -> 40 km/h" << endl;
-    arabaSensoru.hizAyarla(40);
+    std::cout << "\n--- SCENARIO 2: 10 km/h -> 40 km/h ---\n";
+    carSensor.setSpeed(40);
 
     return 0;
 }
