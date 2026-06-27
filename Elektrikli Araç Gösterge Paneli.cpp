@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 
-//Baştaki I(Interface) 
 class IDisplay {
 public:
     virtual void update(int speed) = 0;
@@ -16,7 +15,6 @@ public:
     void attach(IDisplay* display) {
         displays.push_back(display);
     }
-
     void setSpeed(int speed) {
         currentSpeed = speed;
         for (auto display : displays) {
@@ -24,7 +22,6 @@ public:
         }
     }
 };
-
 class SpeedDisplay : public IDisplay {
 private:
     int speed = 0;
@@ -33,7 +30,6 @@ public:
     void showSpeed() const {
         std::cout << "Current Speed: " << speed << " km/h\n";
     }
-
     void update(int s) override {
         speed = s;
         showSpeed();
@@ -59,13 +55,10 @@ private:
             double force = vehicleMass * acceleration;
             accelerationLoad = (force * (currentSpeed / 3.6) / 1000.0) / 0.90;
         }
-
         currentPowerKw = constantLoad + accelerationLoad;
         std::cout << "Instant Power Demand: " << currentPowerKw << " kW\n";
-
         previousSpeed = currentSpeed;
     }
-
     void updateBatteryLevel() {
         consumedKwh = currentPowerKw / 3600.0; // 1 saniyede harcanan enerji
         batteryLevel -= consumedKwh;
@@ -76,7 +69,6 @@ private:
 
         std::cout << "Remaining Battery: " << batteryLevel << " kWh\n";
     }
-
 public:
     void update(int speed) override {
         calculatePowerDemand(speed);
